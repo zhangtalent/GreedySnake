@@ -1,0 +1,292 @@
+<html  style="width:100%;height:100%;">
+
+	
+	<head>
+			<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	</head>
+
+	<body style="width:100%;height:100%;text-align:center;">
+		<canvas style="background-color:87CEFA;" id="cv"></canvas>
+		<div style="width:300px;position:fixed;z-index:99;bottom:15px;right:15px;">
+			<button style="width:100px;height:100px;" onclick="snakeup()">👆</button><br>
+			<button style="width:100px;height:100px;"  onclick="snakeleft()">👈</button>
+			<button style="margin-left:70px;width:100px;height:100px;"  onclick="snakeright()">👉</button><br>
+			<button style="width:100px;height:100px;" onclick="snakedown()">👇</button>
+		</div>	
+		
+	</body>
+	
+	
+	<script>
+		var width = document.body.clientWidth;
+		var height = document.body.clientHeight;
+		var click = 0;
+		var hsize = 0;
+		var vsize = 0;
+		var foodInScreen = 0;
+		//一层的水管皮肤
+		var pipeLine = [0,1,4,4,4,4,4,4,1,0];
+		//颜色集合
+		//0透明1黑色2红色3黄色4绿色5蓝色6白色7灰色
+		var colors=["#","black","red","yellow","green","blue","white","gray"];
+		var cx = document.getElementById("cv");
+		var startbtX = width/2;
+		if(width>1000){
+			cx.width = 1000;
+			startbtX = 150;
+			hsize = 20;
+		}
+		else{
+			var q = parseInt(width/50);
+			cx.width = q*50;
+			var edge = (width-50*q)/2;
+			//cx.style.marginLeft = edge;
+			hsize = q;
+		}
+		
+		var p = parseInt(height/50);
+		cx.height = p*50;
+		var edge = (height-50*p)/2;
+		//cx.style.marginTop = edge;	
+		vsize = p;
+		//cx.height = height;
+		//最大像素尺寸
+		var MaxEdgeSize = parseInt(height/80);
+		var ctx=cx.getContext("2d") //create 2d object
+		//游戏按钮坐标
+		
+		var startbtY = height-150;
+		console.log(startbtX,startbtY)
+		//是否再游戏
+		var isgaming = 0;
+		//蛇身体的位置集合
+		var snakes = [];
+		//人物位置
+		var foodpos = [];
+		//速度
+		var speed = 1;
+		//计算
+		var count = 0;
+		var blocksize = 50;
+		var score = 0;
+		//游戏运行
+		//位置 2下4左6有8上
+		var w = 6;
+		var interval = setInterval(gaming, 100); //启动,func不能使用括号
+		clearInterval(interval );//停止
+		function gaming(){
+			if(count%300 == 0){count = 0;speed+=1;}
+			count++;
+			//画 清画布
+			ctx.clearRect(0,0,cx.width,cx.height); 
+			var size = snakes.length;
+			//没食物话十五
+			if(foodInScreen==0){
+				foodpos = makefood(hsize,vsize);
+				console.log('---失误',foodpos[0],foodpos[1])
+				foodInScreen = 1;
+			}else{
+				//ctx.font="70px Arial";
+				ctx.fillStyle=colors[3];
+				ctx.fillRect(foodpos[0]*blocksize,foodpos[1]*blocksize,blocksize,blocksize);	
+			}
+
+				//向右且超出限定大小失败
+				if(w == 6){
+					if(((snakes[0][0])+1) >= hsize){
+						startgames(1);
+						//break;
+					}else{
+						//如果吃到食物。添加进snake，不然就继续移动
+						if(((snakes[0][0])+1)==foodpos[0] && snakes[0][1] == foodpos[1]){
+							foodInScreen = 0;
+							drawSnake(1,foodpos[0],foodpos[1])
+							//break;
+						}
+						for(var j = 1;j<size;j++){
+							if(((snakes[0][0])+1)==snakes[j][0]&& snakes[0][1] == snakes[j][1]){
+								startgames(1);
+								break;
+							}
+						}
+						drawSnake(0,snakes[0][0]+1,snakes[0][1])
+					}
+				}
+				//左
+				if(w == 4){
+				
+					if(((snakes[0][0])-1) < 0){
+						startgames(1);
+						//break;
+					}else{
+						//如果吃到食物。添加进snake，不然就继续移动
+						if(((snakes[0][0])-1)==foodpos[0] && snakes[0][1] == foodpos[1]){
+							foodInScreen = 0;
+							drawSnake(1,foodpos[0],foodpos[1])
+							//break;
+						}
+						for(var j = 1;j<size;j++){
+							if(((snakes[0][0])-1)==snakes[j][0]&& snakes[0][1] == snakes[j][1]){
+								startgames(1);
+								break;
+							}
+						}
+						drawSnake(0,snakes[0][0]-1,snakes[0][1])
+					}
+				}
+				//下
+				if(w == 2){
+					
+					if(((snakes[0][1])+1) >= vsize){
+						startgames(1);
+						//break;
+					}else{
+						//如果吃到食物。添加进snake，不然就继续移动
+						if(((snakes[0][1])+1)==foodpos[1] && snakes[0][0] == foodpos[0]){
+							foodInScreen = 0;
+							drawSnake(1,foodpos[0],foodpos[1])
+							//break;
+						}
+						for(var j = 1;j<size;j++){
+							if(((snakes[0][1])+1)==snakes[j][1]&& snakes[0][0] == snakes[j][0]){
+								startgames(1);
+								break;
+							}
+						}
+						drawSnake(0,snakes[0][0],snakes[0][1]+1)
+					}
+				}
+				//上
+				if(w == 8){
+					if(((snakes[0][1])-1) < 0){
+						startgames(1);
+						//break;
+					}else{
+						//如果吃到食物。添加进snake，不然就继续移动
+						if(((snakes[0][1])-1)==foodpos[1] && snakes[0][0] == foodpos[0]){
+							foodInScreen = 0;
+							drawSnake(1,foodpos[0],foodpos[1])
+							//break;
+						}
+						for(var j = 1;j<size;j++){
+							if(((snakes[0][1])-1)==snakes[j][1]&& snakes[0][0] == snakes[j][0]){
+								startgames(1);
+								break;
+							}
+						}
+						drawSnake(0,snakes[0][0],snakes[0][1]-1)
+					}
+				}
+
+			 
+			
+		} //定时任务	
+		
+		//点击事件
+		cx.onclick = function(event){
+			//var event = event || window.event;
+			var x = event.pageX - cx.getBoundingClientRect().left;
+			var y = event.pageY - cx.getBoundingClientRect().top;
+            var pos = {'x':x,'y':y}
+			console.log(pos.x,pos.y)
+			click = 1;
+			//是否触发游戏开始
+			if(pos.x>=startbtX-50&&pos.x<=startbtX+250&&pos.y>=startbtY-50&&pos.y<=startbtY+150&&isgaming==0){
+				//alert('Game start')
+				//画 清画布
+				ctx.clearRect(0,0,cx.width,cx.height);  
+				var curX = parseInt(Math.random()*(hsize-3))
+				var curY = parseInt(Math.random()*(vsize-3))
+				snakes.push([curX,curY]);
+				drawBlock(curX,curY,50);
+				interval = setInterval(gaming, 100); //启动,func不能使用括号
+				isgaming = 1;
+			}
+			
+		}
+		
+		
+		//开始游戏按钮设定
+		function startgames(flag){
+			//flag为0表示第一次玩，1为失败重新游戏	
+			if(flag == 0){
+				ctx.font="70px Arial";
+				ctx.font="70px Arial";
+				ctx.fillStyle=colors[6];
+				ctx.fillText("Start Game",startbtX,startbtY);
+				ctx.fillText("张天才的贪吃蛇",startbtX-130,startbtY-300);
+			}else{
+				isgaming = 0;
+				snakes = [];
+				foodpos = [];
+				speed = 1;
+				count = 0;
+				ctx.font="70px Arial";
+				ctx.font="70px Arial";
+				ctx.fillStyle=colors[6];
+				
+				ctx.fillText("游戏结束:"+score+"分",startbtX-130,startbtY-300);
+				ctx.fillText("Restart Game",startbtX,startbtY);
+				score = 0;
+				clearInterval(interval );//停止
+			}
+			
+		}
+		
+		startgames(0);
+		//生成食物位置
+		function makefood(hsize,vsize){
+			var curX = parseInt(Math.random()*hsize)
+			var curY = parseInt(Math.random()*vsize)
+			//ctx.font="3px Arial";
+			//ctx.fillStyle=colors[6];
+			//ctx.fillText("$",curX*blocksize+10,curY*blocksize+10);
+			ctx.fillStyle=colors[3];
+			ctx.fillRect(curX*blocksize,curY*blocksize,blocksize,blocksize);	
+			return [curX,curY]
+		}
+		
+		function snakeup(){
+			w = 8;
+		}
+		function snakedown(){
+			w = 2;
+		}
+		function snakeleft(){
+			w = 4;
+		}
+		function snakeright(){
+			w = 6;
+		}
+		
+		
+		//画筷函数
+		function drawBlock(X,Y,blocksize){
+					ctx.fillStyle=colors[1];
+					ctx.fillRect(X*blocksize,Y*blocksize,blocksize,blocksize);	
+		}	
+		
+		function drawSnake(isfood,x,y){
+			if(isfood == 1){
+				snakes.push([x,y]);
+				score++;
+				var cursize = snakes.length;
+				for(var i= cursize-1;i>0;i--){
+					snakes[i] = snakes[i-1];
+					//drawBlock(snakes[i][0],snakes[i][1],50);
+				}
+				snakes[0] = [x,y];
+				drawBlock(snakes[0][0],snakes[0][1],50);
+			}else{
+				var cursize = snakes.length;
+				for(var i= cursize-1;i>0;i--){
+					snakes[i] = snakes[i-1];
+					drawBlock(snakes[i][0],snakes[i][1],50);
+				}
+				snakes[0] = [x,y];
+				drawBlock(snakes[0][0],snakes[0][1],50);
+			}
+		}
+	</script>
+	
+</html>
